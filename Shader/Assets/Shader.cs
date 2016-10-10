@@ -126,6 +126,68 @@ public class Shader : MonoBehaviour {
 
 
 
+ 
+
+//Unity每次在准备数据并通知GPU渲染的过程称为一次Draw Call。
+//一般情况下，渲染一次拥有一个网格并携带一种材质的物体便会使用一次Draw Call
+
+//顶点着色器的输出参数可以说是直接作为了片段着色器的形参传递过来，那么不由得一个问题浮现出来，顶点着色器的形参是从何处传递过来的？
+
+
+// 那么顶点着色器可以根据语义获取到的全部mesh信息有：
+// float4 vertex : POSITION; //顶点坐标
+// float4 tangent : TANGENT; // tangent，三角函数的一种，缩写为tan我们很熟悉了，他的值是mesh到表面法线的正切值
+// float3 normal : NORMAL; //表面法向量，以对象的坐标系标准化至单位长度
+// float4 texcoord : TEXCOORD0;//纹理坐标系的第0个集合
+// float4 texcoord1 : TEXCOORD1; //纹理坐标系的第1个集合
+// fixed4 color : COLOR;//颜色，通常为常数
+
+//同理我们可以声明一个顶点着色器的输入结构体，包含以上所有信息，然后将这个结构体作为形参传递给顶点着色器的入口函数。
+
+// Unity内建的预定义输入结构体：
+// 只要引用UnityCg.cginc头文件(目录Unity > Editor > Data > CGIncludes下)就可以使用预先设定好的结构体直接使用，他们分别有appdata_base  appdata_tan和appdata_full:
+
+// struct appdata_base {  
+// float4 vertex : POSITION;  
+// float3 normal : NORMAL;  
+// float4 texcoord : TEXCOORD0;  
+// };  
+// struct appdata_tan {  
+//   
+// float4 vertex : POSITION;  
+// float4 tangent : TANGENT;  
+// float3 normal : NORMAL;  
+// float4 texcoord : TEXCOORD0;  
+// };  
+// struct appdata_full {  
+// float4 vertex : POSITION;  
+// float4 tangent : TANGENT;  
+// float3 normal : NORMAL;  
+// float4 texcoord : TEXCOORD0;  
+// float4 texcoord1 : TEXCOORD1;  
+// fixed4 color : COLOR;  
+//   
+// };  
+
+//如果原信息的值域的每个分量不在[0,1] 只需要将原信息的值域变换至这个区间内，使其每个分量都不超过[0,1]这个区间，我们就能将mesh信息与颜色建立单向映射体现出来。
+
+//output.col = input.texcoord;
+//output.col = float4(input.texcoord.x, 0.0, 0.0, 1.0);
+//output.col = float4((input.normal + float3(1.0, 1.0, 1.0)) / 2.0, 1.0); 
+//该点的颜色 等于 该点的纹理坐标
+
+//通过两个pass 
+//一个完整的球先切前面给后面上色
+//一个完整的球切后面给前面上色
+//把两个pass的结果结合
+
+
+
+
+
+
+
+
 //用shaderlab来组织shader结构，cg,hlsl实际shader代码镶嵌在shaderlab里面
 
 
