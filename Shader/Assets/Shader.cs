@@ -182,7 +182,8 @@ public class Shader : MonoBehaviour {
 //把两个pass的结果结合
 
 
-
+//RoundShader 可能会超出边界。
+//需要增加顶点着色器，   片段着色器才会正常
 
 
 
