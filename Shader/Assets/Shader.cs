@@ -189,6 +189,114 @@ public class Shader : MonoBehaviour {
 
 
 
+
+//顶点数据：通过语义输入顶点参数：position，color，normal，texcoord0，texcoord1
+//顶点着色：输出 position，sv_position，Psize
+//几何图元生成：输出顶点参数
+//光栅化：通过语义产生片段输入参数
+//片段着色器：输出color，depth
+
+//uniforms是unity提供给我们的特定参数，他们也有向量、标量和矩阵，他独立于片段、顶点、图元之外而存在，如果将他们组成的网格mesh理解为一个庞大的宇宙，这些uniforms就好似大宇宙中的物理法则，对于任何的顶点、片段、图元都适用，且数值相同。
+
+//顶点变换：
+//对象/模型坐标系-世界坐标系-观察者坐标系-裁剪坐标系-普通设备坐标系-屏幕/窗口坐标系
+//object-world    world-view  projection  透视变换    视窗变换
+
+//需要注意的是，前3个变换是在顶点着色器中完成的，而透视变换域视窗变换是在后续的环节中完成的。也就是说只有前3个变换过程是可编程的。
+//前3个变换所用到的3个矩阵均可以通过uniform参数获取，并且unity还提供了一个MVP参数，即整合了这3个矩阵，直接完成从模型坐标系至裁剪坐标系的变换。
+
+
+//单位矩阵
+//单位矩阵的特性：任何矩阵乘以单位矩阵，还是得到原矩阵
+
+//平移
+//任何平移过程都是变换矩阵乘以Mt矩阵的过程
+
+//旋转
+//旋转比较复杂，任意旋转向量R=(Rx,Ry,Rz)分别表示绕x,y,z轴旋转的弧度数，将这个1X3矩阵等价的变换为4x4矩阵
+
+//缩放
+//任何缩放过程都是变换矩阵乘以Ms矩阵的过程  特殊的就好比 任何矩阵乘以Sx~Sz都为1的矩阵Ms,图形不发生变换
+
+//复合矩阵
+//前面提到的 位于顶点着色器管辖范围内的3个4X4变换矩阵MobjectToWorld(modelToWorld),简写Mm,MworldToView,简写Mv,Mprojection,简写Mp
+//顶点着色器将输入参数中的顶点坐标按照这3个矩阵进行连续变换即得到剪裁坐标系中的矩
+
+//M原始矩阵*Mm*Mv*Mp=M剪裁坐标系中的矩阵
+
+//那么任意对象/模型坐标系中的原始矩阵M 与Mcombine相乘可以得到剪裁坐标系中的矩阵，因此Unity提供的MVP参数正是这样一个复合矩阵
+
+// uniform float4x4 UNITY_MATRIX_MVP; // model view projection 矩阵  
+// uniform float4x4 UNITY_MATRIX_MV; // model view 矩阵  
+// uniform float4x4 UNITY_MATRIX_P; // projection 矩阵  
+// uniform float4x4 UNITY_MATRIX_T_MV;  
+// //  model view 矩阵的转置(transpose)矩阵  
+// uniform float4x4 UNITY_MATRIX_IT_MV;  
+// // model view 矩阵的逆矩阵的转置矩阵  
+// uniform float4x4 UNITY_MATRIX_TEXTURE0; // 纹理矩阵  
+// uniform float4x4 UNITY_MATRIX_TEXTURE1; // 纹理矩阵  
+// uniform float4x4 UNITY_MATRIX_TEXTURE2; // 纹理矩阵  
+// uniform float4x4 UNITY_MATRIX_TEXTURE3; // 纹理矩阵  
+// uniform float4 UNITY_LIGHTMODEL_AMBIENT; // 环境颜色  
+
+
+// 不透明度
+// 当我们要将两个半透的纹理贴图到一个材质球上的时候就遇到混合的问题，由于前面的知识我们已经知道了片段着色器以及后面的环节的主要工作是输出颜色与深度到帧缓存中，所以两个纹理在每个像素上的颜色到底以怎样的形式混合在一起最后输出到帧缓存中是我们现在首要讨论的内容。
+
+//混合(blending)
+//上一篇文章中的管道环节中的“逐帧操作”环节中的一项操作就是混合操作，可见混合操作是不可编程的固定功能环节
+
+//在混合操作中，我们将片段着色器中计算出来的颜色称之为 “源颜色”，帧缓存中对应的像素已经存在的颜色叫做“目标颜色”。混合操作就是将源颜色与目标颜色以一些选项进行结合。
+
+// 我们选择混合的选项的过程是通过以下面的等式来进行RGBA颜色的计算的:
+// float4 result = SrcFactor * fragment_output + DstFactor * pixel_colo
+
+//其中 fragment_output 是通过片段着色器计算的 RGBA 颜色，pixel_color 是当前帧缓冲区的颜色，result 是混合结果（混合输出阶段），SrcFactor 和 DstFactor 是可配置的 RGBA 颜色（类型是 float4），并且片段颜色和帧颜色的各个分量分别相乘，SrcFactor 和 DstFactor 的值在 Unity ShaderLab 中可以用下面语法指定 ：
+//Blend {code for SrcFactor} {code for DstFactor}
+
+
+
+//混合产生的结果 =  片段着色器计算出来RGBA颜色，源颜色混合选项
+//               +  帧缓存中已存在的对应像素的RGBA颜色，目标颜色混合选项
+
+
+
+//Unity中的Shader 通过ShaderLab语法表达的混合操作过程为：
+//Blend  SrcFactor  DstFactor 
+
+// 
+// 其中这2个代号分别可以选择的选项如下表：
+// 选项代号
+// 与之等价的代码
+// One// float4(1.0)
+// Zero// float4(0.0)
+// SrcColor// fragment_output
+// SrcAlpha// float4(fragment_output.a)
+// DstColor// pixel_color
+// DstAlpha// float4(pixel_color.a)
+// OneMinusSrcColor// float4(1.0) - fragment_output
+// OneMinusSrcAlpha// float4(1.0 - fragment_output.a)
+// OneMinusDstColor// float4(1.0) - pixel_color
+// OneMinusDstAlpha// float4(1.0 - pixel_color.a)
+// 其中float4(1.0)的写法我们前面已经见过，等价于float4(1.0,1.0,1.0,1.0)
+// 并且其中所有向量的分量区间都是[0,1]区间。
+
+
+//Blend One OneMinusSrcAlpha
+//float4 result = float4(1.0, 1.0, 1.0, 1.0) * fragment_output + (float4(1.0, 1.0, 1.0, 1.0) - fragment_output.aaaa) * pixel_color;
+
+
+//Blend One One
+//float4 result = float4(1.0, 1.0, 1.0, 1.0) * fragment_output + float4(1.0, 1.0, 1.0, 1.0) * pixel_color;
+
+
+
+
+
+
+
+
+
 //用shaderlab来组织shader结构，cg,hlsl实际shader代码镶嵌在shaderlab里面
 
 
