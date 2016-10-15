@@ -290,9 +290,65 @@ public class Shader : MonoBehaviour {
 //float4 result = float4(1.0, 1.0, 1.0, 1.0) * fragment_output + float4(1.0, 1.0, 1.0, 1.0) * pixel_color;
 
 
+//
+//那么镜面反射与漫反射的区别就是光碰到的物体表面被弹回来的过程中，表面的平整程度，越平越接近镜面反射，越粗糙就是漫反射。我们现实生活中看到的绝大部分东西的表面都是粗糙的，所以都是漫反射。
+//在讨论漫反射之前一定要回过头来复习一下我们的物理科学中的镜面反射与折射，因为漫反射可以拆分为无数个微小的镜面反射(就像圆形可以看做无数条边的正多边形)，毕竟游戏世界也是为了模拟物理世界，游戏引擎必须要符合物理规律
+
+//好了 接下来我们将前文提到的入射光线、法线 替换为入射向量L(表面到光源的方向为正方向)、法向量N。
+
+// 那么我们的物体表面发生漫反射时，漫反射的量即是由入射向量I与每一个顶点位置的法向量N确定的：
+// diffuse=L·N
+// 这个过程是向量I与N进行点乘，其过程为:
+// diffuse=|L|*|N|*cos∠(L,N)
+
+// 由于我们直接讨论入射向量与法向量的单位向量，所以两个绝对值为1，那么漫反射duffuse=cos∠(L,N)
+// 由此我们可以得到单位向量的入射光的漫反射强度diffuse的值域为:[-1,1]
+// 由余弦曲线可以得知，diffuse在夹角为0~90°为正，90°~270°为负，270~360°为正 
+// 对于cos∠(L,N)超过90°的情况，我们认为入射光已经在介质表面的另外一面了，这种情况我们不考虑，一般来说漫反射都是在外表面进行的。
+// 所以我们的diffuse当夹角超过90°时便认为反射量为0，所以我们对该式子修改为:
+// diffuse=max(0,cos∠(L,N))
+// 即对入射向量与法向量的夹角的余弦 与0 取最大值，保证了反射量不会出现负数。
+
+// 1.光源的位置由unity的内置uniform参数 _WorldSpaceLightPos0给出，由此我们可以计算出每个顶点的入射向量
+// 2.光源的颜色由uniform参数_LightColor0给出
+// 3.法向量直接通过顶点着色器的输入参数中的带语义NORMAL来获得
+// 有了入射向量、法向量、光源颜色，我们就能在顶点着色器中计算出每个顶点位置的反射量，并与光源颜色和材料颜色相乘得到最终表面实际着色的颜
+
+//true
+//float4 y
+//float3 x = y
+//
+//error
+//float3 x = float3(x)
 
 
 
+// 前文中完成最简单的漫反射shader只是单个光源下的漫反射，而往往场景中不仅仅只有一个光源，那么多个光源的情况下我们的物体表面的漫反射强度如何叠加在一起呢？前文打的tag "LightMode"="ForwardBase"又是什么意思呢？
+// Unity内置的DiffuseShader，也就是我们创建一个Material出来时默认的Shader也是多光源的，所以这篇文章完成的shader与默认的diffuse shader基本效果一致。
+
+// Unity在处理多光源的情况时为我们提供了三种模式:修改的地方在 Edit--Project Settings--Player--Other Settings--Rendering Path
+// 1.顶点光 Vertex Lit
+// 2.方向性 Forward (默认)
+// 3.延迟照明 Deferred Lighting 
+// 我们的shader也使用默认的Forward
+
+
+
+// Unity中将平行光称作为像素光，第一个像素光是基础平行光，以LightMode=ForwardBase标签修饰，每多一个像素光都以LightMode=ForwardAdd标签修饰。
+// 并不是所有的光源在运行时都会反射到物体上，而是根据Project的Quality中设置的像素光数量来渲染的。
+// 
+// 默认像素光的数量应该是2，我们有更多的平行光照在物体上，就需要在Edit > Project Settings > Quality中去调节像素光的数量Pixel Light Count
+
+//讲两个pass的输出进行混合
+// 前面的系列6中已经讲过片段着色器是要将mesh组件传递的信息最终计算为颜色(或者深度)存储在帧缓存(Frame Buffer)中。
+// 每个Pass之间输出的颜色通过一定的公式进行混合。
+// 
+// 在这里我们简单实用一比一的模式进行颜色混合,即混合指令为:
+//blend one one
+
+// (1)Vertex Lit Rendering path （定义了Vertex,VertexLMRGBM以及VertexLM 3种Pass）
+// (2)Forward Rendering path（定义了ForwordBase和FowordAdd 2种Passes）
+// (3)Deferred Rendering path（定义了PrepareBase和PrepareFinal 2种Passes）
 
 
 
