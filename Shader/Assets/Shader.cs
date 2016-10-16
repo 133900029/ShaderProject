@@ -389,9 +389,7 @@ public class Shader : MonoBehaviour {
 // 观察向量V越接近R,则镜面反射越明显；
 // 观察向量V越远离R,镜面反射越不明显；
 // 原因就在于世界上没有绝对平整的材料。
-// 所以我们终于以数学公式给出冯氏反射模
-
-
+// 所以我们终于以数学公式给出冯氏反射模型
 //I(specular) = I(income)*K(specular)*max(0,R*V)光滑程度大小的次方
 
 // 其中I specular即为镜面反射的强度，I incoming为入射光线的颜色向量 k specular为材料的镜面反射光颜色，通常是白色的
@@ -403,10 +401,17 @@ public class Shader : MonoBehaviour {
 
 //环境光 float3 ambientLighting = float3(UNITY_LIGHTMODEL_AMBIENT) * float3(_Color);  
 //漫反射光  float3 diffuseReflection=float3(_LightColor0) * float3(_Color)* max(0.0, dot(normalDirection, lightDirection));   
-//冯氏镜面反射 float3 specularReflection=float3(_LightColor0)*float3(_SpecColor)*pow(max(0.0,dot(reflect(-lightDirection, normalDirection),viewDirection)),_Shininess);
-//3者颜色叠加。更加接近真实
+//冯氏镜面反射公式 float3 specularReflection=float3(_LightColor0)*float3(_SpecColor)*pow(max(0.0,dot(reflect(-lightDirection, normalDirection),viewDirection)),_Shininess);
+//冯氏反射模型是为使计算机模拟接近真实的物体表面光泽提出的模型，即环境光(虚拟的)+漫反射光+镜面反射光=表面色彩
+//单平行光源下的逐顶点着色(per-vertex lighting)，又称为古罗着色(Gouraud shading)
+
+//======分界线
+
+//逐像素着色(per-pixcel lighting)，又称为冯氏着色(Phong shading)
 
 
+// 逐顶点着色，故名思意跟顶点有关，也就是在我们的顶点着色器中根据每个顶点上的入射向量L、法向量N、观察向量V等直接计算出每个顶点该有的颜色，然后传递给后续环节进行着色，可想而知由于顶点是离散的，片段是连续的，所以引起着色效果的不光滑很容易理解。
+// 那么逐像素着色与之对应的即是在片段着色器中，对法向量与坐标进行插值(如果不能理解插值，请百度一下)，从而使离散的顶点计算出来的离散的颜色变得连续而光滑。这就是冯氏着色的要义。
 
            
 

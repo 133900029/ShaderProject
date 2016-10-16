@@ -71,6 +71,7 @@
     <None Include="Assets\CuteShader.shader" />
     <None Include="Assets\DiffuseShader.shader" />
     <None Include="Assets\DiffuseShader2.shader" />
+    <None Include="Assets\PhoneShader.shader" />
     <None Include="Assets\RoundShader.shader" />
     <None Include="Assets\SpecularShader.shader" />
   </ItemGroup>
