@@ -430,7 +430,39 @@ public class Shader : MonoBehaviour {
 //向量的差乘：a=(x,y,z) b=(l,m,n) ab=(yn-zm)-(xn-zl)+(xm,yl) //长度为absin  方向为垂直ab
 
 
+//矩阵的乘法
+//3*2   要和 2*5 矩阵配对 然后变成 3*5
+//矩阵的横 与矩阵 的竖 元素 进行点乘 得到第一个数
+//一般使用横向量
+//directx 用行向量
+//opengl 用列向量
+
+// 1   1      0     0
+//-3 = 0  +  -3  +  0
+// 4   0      0     4
            
+//    xp  +  yq  + zr
+//    pqr为单位变量
+
+//v为变量p q r 的线性变换
+
+//               px   py   pz
+//  [1 -3  4] [  qx   qy   qz ]
+//               rx   ry   rz
+//   am=b  理解为 m将a 变换为 b
+//   乘法等价与转换
+
+// [1 0] M =[m11 m12]
+//点在x为1的时候经过m转换之后变m11 m12 可以理解为m11 和m12 为转换后的基量
+
+//  1  0  0
+//  0  1  0
+//  0  0  1
+//可以看作对原来的坐标轴不做修改
+//
+//
+
+
 
 
 //用shaderlab来组织shader结构，cg,hlsl实际shader代码镶嵌在shaderlab里面
